@@ -1,13 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { CartContext } from "../context/CartContext";
 import { Loading } from "./Loading"; // Asegúrate que la ruta sea correcta
 
 export function Navbar() {
     const { user, logout } = useContext(AuthContext);
     const [mostrarMenuAdmin, setMostrarMenuAdmin] = useState(false);
     const [loading, setLoading] = useState(false);
+    const { cantidadTotal } = useContext(CartContext);
     const navigate = useNavigate();
+
+    
 
     const toggleMenuAdmin = () => {
         setMostrarMenuAdmin(!mostrarMenuAdmin);
@@ -30,7 +34,12 @@ export function Navbar() {
 
             <Link to="/"><button>Home</button></Link>
             <Link to="/catalogo"><button>Catálogo</button></Link>
-            <Link to="/"><button>Carrito</button></Link>
+            <Link to="/carrito">
+                <button>
+                    Carrito{cantidadTotal > 0 && ` (${cantidadTotal})`}
+                </button>
+            </Link>
+
             <Link to="/"><button>Contacto</button></Link>
 
             {!user ? (
