@@ -1,0 +1,69 @@
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { Layout } from './Layout';
+import { AuthLayout } from './AuthLayout';
+import { Home } from './Pages/Home';
+import { Login } from './Pages/Login';
+import { Register } from './Pages/Register';
+import { Products } from './Pages/Products';
+import { Stock } from './Pages/Stock';
+import { Users } from './Pages/Users';
+import { Ventas } from './Pages/Ventas';
+import { ProtectedRoute } from './ProtectedRoute';
+import { Catalogo } from './Pages/Catalogo';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        {/* Layout principal con navbar */}
+        <Route element={<Layout />}>
+          <Route path='/' element={<Home />} />
+          <Route path='/catalogo' element={<Catalogo />} />
+        </Route>
+
+        {/* Layout de autenticación SIN navbar */}
+        <Route element={<AuthLayout />}>
+          <Route path='/login' element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Route>
+
+        {/* Rutas protegidas para administradores */}
+        <Route
+          path="/productos"
+          element={
+            <ProtectedRoute roleRequired="Administrador">
+              <Products />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock"
+          element={
+            <ProtectedRoute roleRequired="Administrador">
+              <Stock />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/usuarios"
+          element={
+            <ProtectedRoute roleRequired="Administrador">
+              <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ventas"
+          element={
+            <ProtectedRoute roleRequired="Administrador">
+              <Ventas />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
+  );
+};
+
+
+export default App;
