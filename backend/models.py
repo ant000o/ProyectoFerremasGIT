@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from typing import List
 
 class UserCreate(BaseModel):
     username: str
@@ -75,16 +76,16 @@ class StockCreate(BaseModel):
 class StockUpdate(BaseModel):
     cantidad: int
 
-class VentaCreate(BaseModel):
-    cliente_id: int
+class DetalleProducto(BaseModel):
     producto_id: int
     cantidad: int
-    total: float
 
-class Venta(BaseModel):
-    id: int
-    cliente_id: int
-    producto_id: int
-    cantidad: int
+class VentaCompletaCreate(BaseModel):
+    nombre: str
+    apellido: str
+    telefono: str
+    direccion: str
+    notas: Optional[str] = ""
+    tipo_entrega: str  # "retiro" o "delivery"
+    productos: List[DetalleProducto]
     total: float
-    fecha: str

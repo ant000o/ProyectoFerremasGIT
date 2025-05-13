@@ -1,141 +1,107 @@
 from fastapi import APIRouter, HTTPException
-from models import VentaCreate, Venta
+from models import VentaCompletaCreate
 from database import get_connection
+from datetime import datetime
+from pydantic import BaseModel
 
-router = APIRouter(
-    prefix="/ventas",
-    tags=["ventas"]
-)
+router = APIRouter(prefix="/ventas", tags=["ventas"])
 
 @router.post("/")
-def create_venta(venta: VentaCreate):
+def registrar_venta(venta: VentaCompletaCreate):
     db = get_connection()
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute("SELECT stock FROM productos WHERE id = %s", (venta.producto_id,))
-    producto = cursor.fetchone()
-    if not producto or producto["stock"] < venta.cantidad:
-        raise HTTPException(status_code=400, detail="Stock insuficiente")
+    # Verificar stock para todos los productos
+    for item in venta.productos:
+        cursor.execute("SELECT stock FROM productos WHERE id = %s", (item.producto_id,))
+        producto = cursor.fetchone()
+        if not producto or producto["stock"] < item.cantidad:
+            raise HTTPException(status_code=400, detail=f"Stock insuficiente para el producto ID {item.producto_id}")
 
+    # Insertar en tabla 'ventas'
     cursor.execute("""
-        INSERT INTO ventas (cliente_id, producto_id, cantidad, total)
-        VALUES (%s, %s, %s, %s)
-    """, (venta.cliente_id, venta.producto_id, venta.cantidad, venta.total))
+        INSERT INTO ventas (cliente_id, nombre, apellido, telefono, direccion, notas, tipo_entrega, total)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """, (
+        venta.cliente_id,
+        venta.nombre,
+        venta.apellido,
+        venta.telefono,
+        venta.direccion,
+        venta.notas,
+        venta.tipo_entrega,
+        venta.total
+    ))
+    venta_id = cursor.lastrowid
+
+    # Insertar en 'detalle_ventas' y actualizar stock
+    for item in venta.productos:
+        cursor.execute("""
+            INSERT INTO detalle_ventas (venta_id, producto_id, cantidad)
+            VALUES (%s, %s, %s)
+        """, (venta_id, item.producto_id, item.cantidad))
+
+        cursor.execute("""
+            UPDATE productos SET stock = stock - %s WHERE id = %s
+        """, (item.cantidad, item.producto_id))
+
     db.commit()
+    return {"message": "Venta registrada exitosamente", "venta_id": venta_id}
 
-    cursor.execute("""
-        UPDATE productos
-        SET stock = stock - %s
-        WHERE id = %s
-    """, (venta.cantidad, venta.producto_id))
-    db.commit()
 
-    return {"message": "Venta registrada exitosamente"}
-
-@router.get("/")
-def get_ventas():
+@router.get("/detalladas")
+def get_ventas_detalladas():
     db = get_connection()
     cursor = db.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT v.*, u.username AS cliente_nombre, p.nombre AS producto_nombre
+        SELECT 
+            v.id AS venta_id, v.fecha, v.total, v.estado,
+            u.id AS cliente_id, u.username AS cliente_username,
+            dv.producto_id, p.nombre AS producto_nombre, dv.cantidad
         FROM ventas v
         JOIN usuarios u ON v.cliente_id = u.id
-        JOIN productos p ON v.producto_id = p.id
+        JOIN detalle_ventas dv ON v.id = dv.venta_id
+        JOIN productos p ON dv.producto_id = p.id
+        ORDER BY v.fecha DESC
     """)
-    ventas = cursor.fetchall()
-    return ventas
+    rows = cursor.fetchall()
 
-@router.get("/{venta_id}")
-def get_venta(venta_id: int):
+    # Agrupar por venta
+    ventas = {}
+    for row in rows:
+        vid = row["venta_id"]
+        if vid not in ventas:
+            ventas[vid] = {
+                "id": vid,
+                "fecha": row["fecha"],
+                "total": row["total"],
+                "estado": row["estado"],
+                "cliente": {
+                    "id": row["cliente_id"],
+                    "username": row["cliente_username"]
+                },
+                "productos": []
+            }
+        ventas[vid]["productos"].append({
+            "producto_id": row["producto_id"],
+            "nombre": row["producto_nombre"],
+            "cantidad": row["cantidad"]
+        })
+
+    return list(ventas.values())
+
+
+
+
+
+class EstadoVenta(BaseModel):
+    estado: str
+
+@router.put("/{venta_id}/estado")
+def actualizar_estado_venta(venta_id: int, estado: EstadoVenta):
     db = get_connection()
-    cursor = db.cursor(dictionary=True)
-
-    cursor.execute("SELECT * FROM ventas WHERE id = %s", (venta_id,))
-    venta = cursor.fetchone()
-
-    if not venta:
-        raise HTTPException(status_code=404, detail="Venta no encontrada")
-
-    return venta
-
-@router.put("/{venta_id}")
-def update_venta(venta_id: int, updated_venta: VentaCreate):
-    db = get_connection()
-    cursor = db.cursor(dictionary=True)
-
-    # Obtener la venta original
-    cursor.execute("SELECT * FROM ventas WHERE id = %s", (venta_id,))
-    venta_anterior = cursor.fetchone()
-    if not venta_anterior:
-        raise HTTPException(status_code=404, detail="Venta no encontrada")
-
-    producto_anterior_id = venta_anterior["producto_id"]
-    cantidad_anterior = venta_anterior["cantidad"]
-
-    # Revertir stock anterior
-    cursor.execute("""
-        UPDATE productos
-        SET stock = stock + %s
-        WHERE id = %s
-    """, (cantidad_anterior, producto_anterior_id))
-
-    # Verificar si hay suficiente stock del nuevo producto
-    cursor.execute("SELECT stock FROM productos WHERE id = %s", (updated_venta.producto_id,))
-    producto_nuevo = cursor.fetchone()
-    if not producto_nuevo or producto_nuevo["stock"] < updated_venta.cantidad:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Stock insuficiente para el producto actualizado")
-
-    # Descontar stock del nuevo producto
-    cursor.execute("""
-        UPDATE productos
-        SET stock = stock - %s
-        WHERE id = %s
-    """, (updated_venta.cantidad, updated_venta.producto_id))
-
-    # Actualizar la venta
-    cursor.execute("""
-        UPDATE ventas
-        SET cliente_id = %s, producto_id = %s, cantidad = %s, total = %s
-        WHERE id = %s
-    """, (
-        updated_venta.cliente_id,
-        updated_venta.producto_id,
-        updated_venta.cantidad,
-        updated_venta.total,
-        venta_id
-    ))
-
+    cursor = db.cursor()
+    cursor.execute("UPDATE ventas SET estado = %s WHERE id = %s", (estado.estado, venta_id))
     db.commit()
-    return {"message": "Venta actualizada correctamente y stock ajustado"}
-
-@router.delete("/{venta_id}")
-def delete_venta(venta_id: int):
-    db = get_connection()
-    cursor = db.cursor(dictionary=True)
-
-    # Obtener los datos de la venta antes de eliminarla
-    cursor.execute("SELECT * FROM ventas WHERE id = %s", (venta_id,))
-    venta = cursor.fetchone()
-
-    if not venta:
-        raise HTTPException(status_code=404, detail="Venta no encontrada")
-
-    producto_id = venta["producto_id"]
-    cantidad = venta["cantidad"]
-
-    # Reponer stock del producto
-    cursor.execute("""
-        UPDATE productos
-        SET stock = stock + %s
-        WHERE id = %s
-    """, (cantidad, producto_id))
-
-    # Eliminar la venta
-    cursor.execute("DELETE FROM ventas WHERE id = %s", (venta_id,))
-    db.commit()
-
-    return {"message": "Venta eliminada correctamente y stock repuesto"}
-
-
+    return {"message": "Estado actualizado correctamente"}

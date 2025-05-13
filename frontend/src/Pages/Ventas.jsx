@@ -1,188 +1,82 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, useContext } from "react";
 import axios from "axios";
+import { AuthContext } from "../context/AuthContext";
 
 export function Ventas() {
-    const [ventas, setVentas] = useState([]);
-    const [form, setForm] = useState({
-        cliente_id: "",
-        producto_id: "",
-        cantidad: ""
-    });
-    const [editandoId, setEditandoId] = useState(null);
-    const [productos, setProductos] = useState([]);
-    const [clientes, setClientes] = useState([]);
-    const [total, setTotal] = useState(0);
+  const { user } = useContext(AuthContext);
+  const [ventas, setVentas] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchVentas();
-        fetchProductos();
-        fetchClientes();
-    }, []);
+  useEffect(() => {
+    axios.get("http://localhost:8000/ventas/detalladas")
+      .then((res) => setVentas(res.data))
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
 
-    useEffect(() => {
-        const productoSeleccionado = productos.find(p => p.id === parseInt(form.producto_id));
-        const cantidad = parseInt(form.cantidad);
-        if (productoSeleccionado && !isNaN(cantidad)) {
-            setTotal(productoSeleccionado.precio * cantidad);
-        } else {
-            setTotal(0);
-        }
-    }, [form.producto_id, form.cantidad, productos]);
+  const handleEstadoChange = (id, nuevoEstado) => {
+    axios.put(`http://localhost:8000/ventas/${id}/estado`, { estado: nuevoEstado })
+      .then(() => {
+        setVentas((prev) =>
+          prev.map((venta) =>
+            venta.id === id ? { ...venta, estado: nuevoEstado } : venta
+          )
+        );
+      })
+      .catch((err) => console.error(err));
+  };
 
-    const fetchVentas = async () => {
-        const res = await axios.get("http://localhost:8000/ventas");
-        setVentas(res.data);
-    };
+  if (loading) return <div>Cargando ventas...</div>;
 
-    const fetchProductos = async () => {
-        const res = await axios.get("http://localhost:8000/productos");
-        setProductos(res.data);
-    };
-
-    const fetchClientes = async () => {
-        const res = await axios.get("http://localhost:8000/usuarios");
-        setClientes(res.data);
-    };
-
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const token = localStorage.getItem("token");
-
-        const productoSeleccionado = productos.find(p => p.id === parseInt(form.producto_id));
-        const cantidad = parseInt(form.cantidad);
-
-        if (!productoSeleccionado) {
-            alert("Selecciona un producto válido.");
-            return;
-        }
-
-        if (cantidad > productoSeleccionado.stock) {
-            alert(`La cantidad supera el stock disponible (${productoSeleccionado.stock}).`);
-            return;
-        }
-
-        const ventaData = {
-            ...form,
-            total
-        };
-
-        if (editandoId) {
-            await axios.put(`http://localhost:8000/ventas/${editandoId}`, ventaData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setEditandoId(null);
-        } else {
-            await axios.post("http://localhost:8000/ventas", ventaData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-        }
-
-        setForm({ cliente_id: "", producto_id: "", cantidad: "" });
-        setTotal(0);
-        fetchVentas();
-    };
-
-    const handleEdit = (venta) => {
-        setForm({
-            cliente_id: venta.cliente_id,
-            producto_id: venta.producto_id,
-            cantidad: venta.cantidad
-        });
-        setEditandoId(venta.id);
-        setTotal(venta.total);
-    };
-
-    const handleDelete = async (id) => {
-        const token = localStorage.getItem("token");
-        await axios.delete(`http://localhost:8000/ventas/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        fetchVentas();
-    };
-
-    return (
-        <div className="dashboard-container">
-            <h2>Administrador de Ventas</h2>
-
-            <form onSubmit={handleSubmit} className="product-form">
-                <select
-                    name="cliente_id"
-                    value={form.cliente_id}
-                    onChange={handleChange}
-                    required
-                >
-                    <option value="">Seleccionar Cliente</option>
-                    {clientes.map((cliente) => (
-                        <option key={cliente.id} value={cliente.id}>
-                            {cliente.username}
-                        </option>
+  return (
+    <div className="p-4">
+      <h2 className="text-2xl font-bold mb-4">Ventas</h2>
+      {ventas.length === 0 ? (
+        <p>No hay ventas registradas.</p>
+      ) : (
+        <table className="w-full border border-gray-300 rounded-md bg-white shadow">
+          <thead>
+            <tr className="bg-gray-100 text-left">
+              <th className="p-2">ID</th>
+              <th className="p-2">Fecha</th>
+              <th className="p-2">Cliente</th>
+              <th className="p-2">Productos</th>
+              <th className="p-2">Total</th>
+              <th className="p-2">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ventas.map((venta) => (
+              <tr key={venta.id} className="border-t border-gray-200">
+                <td className="p-2">{venta.id}</td>
+                <td className="p-2">{new Date(venta.fecha).toLocaleString()}</td>
+                <td className="p-2">{venta.cliente.username}</td>
+                <td className="p-2">
+                  <ul className="list-disc pl-4">
+                    {venta.productos.map((prod) => (
+                      <li key={prod.producto_id}>
+                        {prod.nombre} x{prod.cantidad}
+                      </li>
                     ))}
-                </select>
-
-                <select
-                    name="producto_id"
-                    value={form.producto_id}
-                    onChange={handleChange}
-                    required
-                >
-                    <option value="">Seleccionar Producto</option>
-                    {productos.map((producto) => (
-                        <option key={producto.id} value={producto.id}>
-                            {producto.nombre} (Stock: {producto.stock})
-                        </option>
-                    ))}
-                </select>
-
-                <input
-                    type="number"
-                    name="cantidad"
-                    placeholder="Cantidad"
-                    value={form.cantidad}
-                    onChange={handleChange}
-                    required
-                    min="1"
-                />
-
-                <div>
-                    <strong>Total:</strong> ${total}
-                </div>
-
-                <button type="submit">
-                    {editandoId ? "Actualizar Venta" : "Agregar Venta"}
-                </button>
-            </form>
-
-            <table className="product-table">
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Total</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {ventas.map((venta) => (
-                        <tr key={venta.id}>
-                            <td>{venta.cliente_nombre}</td>
-                            <td>{venta.producto_nombre}</td>
-                            <td>{venta.cantidad}</td>
-                            <td>${venta.total}</td>
-                            <td>{venta.fecha}</td>
-                            <td>
-                                <button onClick={() => handleEdit(venta)}>Editar</button>
-                                <button onClick={() => handleDelete(venta.id)}>Eliminar</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
+                  </ul>
+                </td>
+                <td className="p-2">${venta.total}</td>
+                <td className="p-2">
+                  <select
+                    value={venta.estado}
+                    onChange={(e) => handleEstadoChange(venta.id, e.target.value)}
+                    className="border rounded px-2 py-1"
+                  >
+                    <option value="pendiente">Pendiente</option>
+                    <option value="confirmada">Confirmada</option>
+                    <option value="enviada">Enviada</option>
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
 }
