@@ -4,9 +4,6 @@ from routers import auth, products, stock, bodegas, users, ventas
 from fastapi.staticfiles import StaticFiles
 from routers.upload import upload_router
 
-
-
-
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")

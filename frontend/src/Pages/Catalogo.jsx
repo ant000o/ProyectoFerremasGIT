@@ -98,8 +98,8 @@ export function Catalogo() {
             )}
             {mostrarConfirmacion && (
                 <div className="modal-overlay">
-                    <div className="modal-content">
-                        <p style={{ fontSize: "1.2rem", fontWeight: "bold", color: "green" }}>
+                    <div className="modal-content confirmacion">
+                        <p style={{ fontSize: "1.2rem", fontWeight: "bold" }}>
                             ¡Producto agregado al carrito!
                         </p>
                     </div>

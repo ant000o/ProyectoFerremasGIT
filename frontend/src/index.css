@@ -304,16 +304,20 @@ body{
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 .modal-content {
-    background: white;
+    background: #ffffff;
     padding: 2rem;
-    border-radius: 0.5rem;
-    width: 400px;
-    max-width: 90%;
+    border-radius: 0.75rem;
+    width: 420px;
+    max-width: 95%;
     position: relative;
     text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: scaleIn 0.3s ease-in-out;
+    font-family: "Segoe UI", sans-serif;
 }
 
 .modal-close {
@@ -322,9 +326,131 @@ body{
     right: 15px;
     background: transparent;
     border: none;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    color: #555;
     cursor: pointer;
 }
 
+.modal-close:hover {
+    color: #000;
+}
+
+.modal-content img.producto-img {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+}
+
+.modal-content button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    border-radius: 0.4rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 1rem;
+}
+
+.modal-content button:hover {
+    background-color: #218838;
+}
+
+/* Modal de confirmación */
+.modal-content.confirmacion {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
 /* Carrito */
+/* Estilos específicos del carrito */
+.carrito-container {
+    padding: 2rem;
+}
+
+.carrito-container h2 {
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.carrito-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.carrito-table th,
+.carrito-table td {
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.carrito-table th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+}
+
+.carrito-table td img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+}
+
+.carrito-button {
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 0.3rem;
+    font-size: 1rem;
+    margin: 0.5rem;
+}
+
+.carrito-button:hover {
+    background-color: #0056b3;
+}
+
+.carrito-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.carrito-total {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: right;
+    margin-top: 1rem;
+}
+
+.carrito-pago {
+    text-align: right;
+}
+
+/* Checkout */
 

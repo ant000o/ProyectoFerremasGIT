@@ -11,7 +11,7 @@ export function Navbar() {
     const { cantidadTotal } = useContext(CartContext);
     const navigate = useNavigate();
 
-    
+    const { setCart } = useContext(CartContext); // 👈 Obtén del contexto
 
     const toggleMenuAdmin = () => {
         setMostrarMenuAdmin(!mostrarMenuAdmin);
@@ -20,11 +20,14 @@ export function Navbar() {
     const handleLogout = () => {
         setLoading(true);
         setTimeout(() => {
-            logout();
+            localStorage.removeItem("carrito"); // Limpia el localStorage
+            setCart([]);                        // Limpia el contexto del carrito
+            logout();                           // Cierra sesión
             navigate("/");
             setLoading(false);
         }, 1500);
     };
+
 
     if (loading) return <Loading message="Cerrando sesión..." />;
 

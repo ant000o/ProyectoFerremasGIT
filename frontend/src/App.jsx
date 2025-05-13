@@ -10,6 +10,7 @@ import { Users } from './Pages/Users';
 import { Ventas } from './Pages/Ventas';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Catalogo } from './Pages/Catalogo';
+import { Carrito } from './Pages/Carrito';
 
 function App() {
   return (
@@ -19,6 +20,8 @@ function App() {
         <Route element={<Layout />}>
           <Route path='/' element={<Home />} />
           <Route path='/catalogo' element={<Catalogo />} />
+          <Route path='/carrito' element={<Carrito />} />
+          
         </Route>
 
         {/* Layout de autenticación SIN navbar */}
