@@ -30,15 +30,18 @@ def login(user: UserLogin):
 
     cursor.execute("SELECT * FROM usuarios WHERE username = %s", (user.username,))
     user_data = cursor.fetchone()
+
     if not user_data or not verify_password(user.password, user_data["password_hash"]):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
     token = create_access_token({"sub": user_data["username"], "rol": user_data["rol"]})
+
     return {
-    "access_token": token,
-    "token_type": "bearer",
-    "user": {
-        "username": user_data["username"],
-        "rol": user_data["rol"]
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user_data["id"],  # ✅ Agregado
+            "username": user_data["username"],
+            "rol": user_data["rol"]
+        }
     }
-}

@@ -32,7 +32,7 @@ export function Login() {
             const decoded = jwtDecode(token); // decodificamos el token
 
             // Esto guarda el usuario con su rol en el contexto
-            login({ username: decoded.sub, rol: decoded.rol }, token);
+            login({id: data.user.id, username: decoded.sub, rol: decoded.rol }, token);
 
             navigate("/");
         } catch (error) {

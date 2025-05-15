@@ -81,6 +81,7 @@ class DetalleProducto(BaseModel):
     cantidad: int
 
 class VentaCompletaCreate(BaseModel):
+    cliente_id: int
     nombre: str
     apellido: str
     telefono: str

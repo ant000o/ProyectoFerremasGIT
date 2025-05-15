@@ -8,29 +8,35 @@ export const CartProvider = ({ children }) => {
         return carritoGuardado ? JSON.parse(carritoGuardado) : [];
     });
 
-    // Cantidad total de productos en el carrito
     const cantidadTotal = cart.reduce((total, p) => total + p.cantidad, 0);
 
-    // Guardar el carrito en localStorage cada vez que cambia
     useEffect(() => {
         localStorage.setItem("carrito", JSON.stringify(cart));
     }, [cart]);
 
-    // Agregar producto al carrito
     const agregarAlCarrito = (producto) => {
         const existente = cart.find((p) => p.id === producto.id);
         if (existente) {
-            setCart(cart.map((p) =>
-                p.id === producto.id ? { ...p, cantidad: p.cantidad + 1 } : p
-            ));
+        setCart(
+            cart.map((p) =>
+            p.id === producto.id ? { ...p, cantidad: p.cantidad + 1 } : p
+            )
+        );
         } else {
-            setCart([...cart, { ...producto, cantidad: 1 }]);
+        setCart([...cart, { ...producto, cantidad: 1 }]);
         }
     };
 
+    // Aquí agregamos clearCart para vaciar carrito
+    const clearCart = () => {
+        setCart([]);
+    };
+
     return (
-        <CartContext.Provider value={{ cart, setCart, agregarAlCarrito, cantidadTotal }}>
-            {children}
+        <CartContext.Provider
+        value={{ cart, setCart, agregarAlCarrito, cantidadTotal, clearCart }}
+        >
+        {children}
         </CartContext.Provider>
     );
 };
