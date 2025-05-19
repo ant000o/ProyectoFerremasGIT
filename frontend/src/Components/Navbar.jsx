@@ -43,7 +43,7 @@ export function Navbar() {
                 </button>
             </Link>
 
-            <Link to="/"><button>Contacto</button></Link>
+            <Link to="/contacto"><button>Contacto</button></Link>
 
             {!user ? (
                 <Link to="/login"><button>Login</button></Link>

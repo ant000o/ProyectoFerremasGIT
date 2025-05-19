@@ -12,6 +12,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { Catalogo } from './Pages/Catalogo';
 import { Carrito } from './Pages/Carrito';
 import { Checkout } from './Pages/Checkout';
+import { Contacto } from './Pages/Contacto';
 
 function App() {
   return (
@@ -22,7 +23,8 @@ function App() {
           <Route path='/' element={<Home />} />
           <Route path='/catalogo' element={<Catalogo />} />
           <Route path='/carrito' element={<Carrito />} />
-          <Route path='/checkout' element={<Checkout />} />          
+          <Route path='/checkout' element={<Checkout />} />    
+          <Route path='/contacto' element={<Contacto />} />      
         </Route>
 
         {/* Layout de autenticación SIN navbar */}

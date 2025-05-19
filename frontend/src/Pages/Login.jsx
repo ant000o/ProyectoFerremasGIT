@@ -43,9 +43,9 @@ export function Login() {
 
 
     return (
-        <div className="login-container">
+        <div className="form-container">
         <h2>Iniciar Sesión</h2>
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className="form">
             <input
             type="text"
             name="username"
