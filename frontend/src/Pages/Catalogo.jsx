@@ -10,19 +10,30 @@ export function Catalogo() {
     const [filtroCategoria, setFiltroCategoria] = useState("");
     const [productoSeleccionado, setProductoSeleccionado] = useState(null);
     const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+    const [tipoCambio, setTipoCambio] = useState(null);
+    const [mostrarUSD, setMostrarUSD] = useState(false); // false = CLP, true = USD
 
 
     useEffect(() => {
-        axios.get("http://localhost:8000/productos")
-            .then((res) => {
-                setProductos(res.data);
-                const cats = [...new Set(res.data.map(p => p.categoria).filter(c => c))];
-                setCategorias(cats);
-            })
-            .catch((err) => {
-                console.error("Error cargando productos", err);
-            });
-    }, []);
+    axios.get("http://localhost:8000/productos")
+        .then((res) => {
+            setProductos(res.data);
+            const cats = [...new Set(res.data.map(p => p.categoria).filter(c => c))];
+            setCategorias(cats);
+        })
+        .catch((err) => {
+            console.error("Error cargando productos", err);
+        });
+
+    // Llamada a API de conversión CLP → USD
+    axios.get("https://api.exchangerate-api.com/v4/latest/CLP")
+        .then((res) => {
+            setTipoCambio(res.data.rates.USD); // Guardamos la tasa USD
+        })
+        .catch((err) => {
+            console.error("Error obteniendo tipo de cambio", err);
+        });
+}, []);
 
     const { agregarAlCarrito } = useContext(CartContext);
 
@@ -52,6 +63,12 @@ export function Catalogo() {
                 </ul>
             </aside>
 
+            <div style={{ marginBottom: "1rem" }}>
+                <button onClick={() => setMostrarUSD(!mostrarUSD)} className="toggle-moneda">
+                    Ver en {mostrarUSD ? "CLP" : "USD"}
+                </button>
+            </div>
+
             <section className="catalogo-productos">
                 {productosFiltrados.map((producto) => (
                     <div className="producto-card" key={producto.id}>
@@ -65,7 +82,11 @@ export function Catalogo() {
                             className="producto-img"
                         />
                         <h4>{producto.nombre}</h4>
-                        <p>${producto.precio.toFixed(2)}</p>
+                        <p>
+                            {mostrarUSD && tipoCambio
+                                ? `$${(producto.precio * tipoCambio).toFixed(2)} USD`
+                                : `$${producto.precio} CLP`}
+                        </p>
                         <button onClick={() => setProductoSeleccionado(producto)}>Ver más</button>
                     </div>
                 ))}
@@ -87,7 +108,14 @@ export function Catalogo() {
                             style={{ height: "200px" }}
                         />
                         <h2>{productoSeleccionado.nombre}</h2>
-                        <p><strong>Precio:</strong> ${productoSeleccionado.precio.toFixed(2)}</p>
+                        <p>
+                            <strong>Precio:</strong>{" "}
+                            {mostrarUSD && tipoCambio
+                                ? `$${(productoSeleccionado.precio * tipoCambio).toFixed(2)} USD`
+                                : `$${productoSeleccionado.precio} CLP`}
+                        </p>
+
+
                         <p><strong>Categoría:</strong> {productoSeleccionado.categoria || "Sin categoría"}</p>
                         <p><strong>Descripción:</strong> {productoSeleccionado.descripcion}</p>
                         <button onClick={() => handleAgregarAlCarrito(productoSeleccionado)}>
