@@ -33,6 +33,8 @@ export function Products() {
     const [productos, setProductos] = useState([]);
     const [editandoId, setEditandoId] = useState(null);
 
+    const [filtroId, setFiltroId] = useState("");
+
 
     const subirImagen = async (file) => {
         const formData = new FormData();
@@ -180,9 +182,19 @@ export function Products() {
             </button>
         </form>
 
+        <input
+            type="number"
+            placeholder="Buscar por ID"
+            value={filtroId}
+            onChange={(e) => setFiltroId(e.target.value)}
+            style={{ marginBottom: "10px", padding: "5px", width: "200px" }}
+        />
+
+
         <table className="product-table">
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Imagen</th>
                     <th>Nombre</th>
                     <th>Descripción</th>
@@ -192,8 +204,13 @@ export function Products() {
                 </tr>
             </thead>
             <tbody>
-                {productos.map((p) => (
+                {productos
+                    .filter((p) =>
+                        filtroId ? p.id === parseInt(filtroId) : true
+                    )
+                    .map((p) => (
                     <tr key={p.id}>
+                    <td>{p.id}</td>
                     <td>
                         {p.image_url && (
                         <img

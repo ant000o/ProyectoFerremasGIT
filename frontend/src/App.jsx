@@ -23,7 +23,14 @@ function App() {
           <Route path='/' element={<Home />} />
           <Route path='/catalogo' element={<Catalogo />} />
           <Route path='/carrito' element={<Carrito />} />
-          <Route path='/checkout' element={<Checkout />} />    
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
           <Route path='/contacto' element={<Contacto />} />      
         </Route>
 
@@ -61,7 +68,7 @@ function App() {
         <Route
           path="/ventas"
           element={
-            <ProtectedRoute roleRequired="Administrador">
+            <ProtectedRoute allowedRoles={["Administrador", "Vendedor"]}>
               <Ventas />
             </ProtectedRoute>
           }

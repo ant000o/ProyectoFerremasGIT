@@ -49,16 +49,24 @@ export function Navbar() {
                 <Link to="/login"><button>Login</button></Link>
             ) : (
                 <>
-                    {user.rol === "Administrador" && (
+                    {(user.rol === "Administrador" || user.rol === "Vendedor") && (
                         <div className="admin-menu">
-                            <button onClick={toggleMenuAdmin}>Menú Admin</button>
-                            {mostrarMenuAdmin && (
+                            {user.rol === "Administrador" && (
+                            <>
+                                <button onClick={toggleMenuAdmin}>Menú Admin</button>
+                                {mostrarMenuAdmin && (
                                 <div className="admin-dropdown">
                                     <Link to="/productos"><button>Productos</button></Link>
                                     <Link to="/stock"><button>Stock</button></Link>
                                     <Link to="/usuarios"><button>Usuarios</button></Link>
                                     <Link to="/ventas"><button>Ventas</button></Link>
                                 </div>
+                                )}
+                            </>
+                            )}
+
+                            {user.rol === "Vendedor" && (
+                            <Link to="/ventas"><button>Ventas</button></Link>
                             )}
                         </div>
                     )}

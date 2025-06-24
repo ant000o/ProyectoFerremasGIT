@@ -84,6 +84,15 @@ export const Checkout = () => {
                     const response = await axios.post("http://localhost:8000/ventas/", ventaPayload);
                     console.log("Venta registrada:", response.data);
                     clearCart();
+                    setFormData({
+                        nombre: "",
+                        apellido: "",
+                        telefono: "",
+                        direccion: "",
+                        comuna: "",
+                        notas: "",
+                        entrega: "retiro",
+                    });
                     setMensajeExito("¡Pago exitoso! Compra registrada. Redirigiendo al inicio...");
                     setTimeout(() => navigate("/"), 5000);
                 } catch (error) {
