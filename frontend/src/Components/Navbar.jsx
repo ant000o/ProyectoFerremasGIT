@@ -49,7 +49,7 @@ export function Navbar() {
                 <Link to="/login"><button>Login</button></Link>
             ) : (
                 <>
-                    {(user.rol === "Administrador" || user.rol === "Vendedor") && (
+                    {(user.rol === "Administrador" || user.rol === "Vendedor" || user.rol === "Bodeguero") && (
                         <div className="admin-menu">
                             {user.rol === "Administrador" && (
                             <>
@@ -60,6 +60,7 @@ export function Navbar() {
                                     <Link to="/stock"><button>Stock</button></Link>
                                     <Link to="/usuarios"><button>Usuarios</button></Link>
                                     <Link to="/ventas"><button>Ventas</button></Link>
+                                    <Link to="/vistabodeguero"><button>Ordenes Bodega</button></Link>
                                 </div>
                                 )}
                             </>
@@ -67,6 +68,10 @@ export function Navbar() {
 
                             {user.rol === "Vendedor" && (
                             <Link to="/ventas"><button>Ventas</button></Link>
+                            )}
+
+                            {user.rol === "Bodeguero" && (
+                            <Link to="/vistabodeguero"><button>Ordenes Bodega</button></Link>
                             )}
                         </div>
                     )}

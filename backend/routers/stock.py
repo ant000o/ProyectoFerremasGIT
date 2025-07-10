@@ -8,6 +8,24 @@ router = APIRouter(
     tags=["stock"]
 )
 
+def obtener_stock_total_asignado(producto_id, excluir_stock_id=None):
+    db = get_connection()
+    cursor = db.cursor()
+
+    if excluir_stock_id:
+        cursor.execute(
+            "SELECT SUM(cantidad) FROM stock WHERE producto_id = %s AND id != %s",
+            (producto_id, excluir_stock_id)
+        )
+    else:
+        cursor.execute(
+            "SELECT SUM(cantidad) FROM stock WHERE producto_id = %s",
+            (producto_id,)
+        )
+    resultado = cursor.fetchone()
+    return resultado[0] or 0
+
+
 # Obtener stock por bodega (con nombre de producto)
 @router.get("/")
 def get_stock(bodega_id: int = Query(...)):
@@ -31,12 +49,24 @@ def create_stock(stock: StockCreate):
     db = get_connection()
     cursor = db.cursor()
 
-    # Comprobar si ya existe el stock para ese producto en esa bodega
+    # Verifica si ya existe stock para este producto en esa bodega
     cursor.execute("SELECT * FROM stock WHERE producto_id = %s AND bodega_id = %s",
-                   (stock.producto_id, stock.bodega_id))
+                (stock.producto_id, stock.bodega_id))
     if cursor.fetchone():
         raise HTTPException(status_code=400, detail="Stock ya existe para este producto en esta bodega")
 
+    # Obtener stock total del producto
+    cursor.execute("SELECT stock FROM productos WHERE id = %s", (stock.producto_id,))
+    producto = cursor.fetchone()
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    stock_total = producto[0]
+    stock_asignado = obtener_stock_total_asignado(stock.producto_id)
+    if stock_asignado + stock.cantidad > stock_total:
+        raise HTTPException(status_code=400, detail=f"Stock excede el disponible. Ya asignado: {stock_asignado}, Total disponible: {stock_total}")
+
+    # Insertar el nuevo registro
     cursor.execute("""
         INSERT INTO stock (producto_id, bodega_id, cantidad)
         VALUES (%s, %s, %s)
@@ -55,6 +85,17 @@ def update_stock(stock_id: int, updated_stock: StockCreate):
     if not cursor.fetchone():
         raise HTTPException(status_code=404, detail="Stock no encontrado")
 
+    # Obtener stock total del producto
+    cursor.execute("SELECT stock FROM productos WHERE id = %s", (updated_stock.producto_id,))
+    producto = cursor.fetchone()
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    stock_total = producto[0]
+    stock_asignado = obtener_stock_total_asignado(updated_stock.producto_id, excluir_stock_id=stock_id)
+    if stock_asignado + updated_stock.cantidad > stock_total:
+        raise HTTPException(status_code=400, detail=f"Stock excede el disponible. Ya asignado: {stock_asignado}, Total disponible: {stock_total}")
+
     cursor.execute("""
         UPDATE stock
         SET producto_id = %s, bodega_id = %s, cantidad = %s
@@ -62,6 +103,7 @@ def update_stock(stock_id: int, updated_stock: StockCreate):
     """, (updated_stock.producto_id, updated_stock.bodega_id, updated_stock.cantidad, stock_id))
     db.commit()
     return {"message": "Stock actualizado correctamente"}
+
 
 
 # Eliminar stock

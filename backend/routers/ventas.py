@@ -98,3 +98,20 @@ def actualizar_estado_venta(venta_id: int, datos: EstadoUpdate):
         raise HTTPException(status_code=404, detail="Venta no encontrada")
 
     return {"message": "Estado actualizado correctamente"}
+
+@router.delete("/{venta_id}")
+def eliminar_venta(venta_id: int):
+    db = get_connection()
+    cursor = db.cursor()
+
+    # Eliminar primero los detalles de la venta
+    cursor.execute("DELETE FROM detalle_ventas WHERE venta_id = %s", (venta_id,))
+
+    # Luego eliminar la venta principal
+    cursor.execute("DELETE FROM ventas WHERE id = %s", (venta_id,))
+    db.commit()
+
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Venta no encontrada")
+
+    return {"message": f"Venta con ID {venta_id} eliminada correctamente"}

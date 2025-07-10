@@ -13,6 +13,7 @@ import { Catalogo } from './Pages/Catalogo';
 import { Carrito } from './Pages/Carrito';
 import { Checkout } from './Pages/Checkout';
 import { Contacto } from './Pages/Contacto';
+import { VistaBodeguero } from './Pages/VistaBodeguero';
 
 function App() {
   return (
@@ -70,6 +71,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["Administrador", "Vendedor"]}>
               <Ventas />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vistabodeguero"
+          element={
+            <ProtectedRoute allowedRoles={["Administrador", "Bodeguero"]}>
+              <VistaBodeguero />
             </ProtectedRoute>
           }
         />
